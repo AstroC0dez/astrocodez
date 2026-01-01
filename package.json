@@ -1,8 +1,25 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "astrocodez-website",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "AstroCodez - Building Digital Universes. A premium, animated website showcasing our development services and team.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AstroC0dez/astrocodez.git"
+  },
+  "homepage": "https://astrocodez.vercel.app",
+  "keywords": [
+    "astrocodez",
+    "web-development",
+    "react",
+    "typescript",
+    "gsap",
+    "animation",
+    "portfolio"
+  ],
+  "author": "AstroCodez Team",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
