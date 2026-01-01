@@ -4,10 +4,11 @@ import logo from '@/assets/logo.svg';
 
 interface LoaderProps {
   onComplete: () => void;
+  onExitStart?: () => void;
   minimumDuration?: number;
 }
 
-const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
+const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps) => {
   const loaderRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const ringsRef = useRef<HTMLDivElement>(null);
@@ -34,7 +35,7 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
       gsap.set(progressBar, { scaleX: 0 });
       gsap.set(glow, { scale: 0.8, opacity: 0 });
 
-      // Entrance timeline - smoother, more professional
+      // Entrance timeline
       const entranceTl = gsap.timeline();
 
       // Glow fades in first
@@ -93,8 +94,7 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
         },
       });
 
-      // Subtle continuous animations - SMOOTH, not rapid
-      // Logo gentle pulse
+      // Subtle continuous animations
       gsap.to(logoEl, {
         scale: 1.03,
         duration: 2,
@@ -103,7 +103,6 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
         ease: 'sine.inOut',
       });
 
-      // Glow subtle pulse
       gsap.to(glow, {
         opacity: 0.6,
         scale: 1.1,
@@ -113,7 +112,6 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
         ease: 'sine.inOut',
       });
 
-      // Rings slow rotation
       gsap.to(rings.children[0], {
         rotation: 360,
         duration: 20,
@@ -133,45 +131,60 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
         ease: 'none',
       });
 
-      // Exit animation after minimum duration
+      // Exit animation
       setTimeout(() => {
-        const exitTl = gsap.timeline({
-          onComplete: onComplete,
+        // 1. Timeline for internal elements exiting
+        const internalExitTl = gsap.timeline({
+          onComplete: () => {
+            // 2. Trigger content entrance (in Index.tsx)
+            if (onExitStart) onExitStart();
+
+            // 3. Slide up the loader curtain
+            gsap.to(loader, {
+              yPercent: -100,
+              duration: 1.2,
+              ease: 'power4.inOut',
+              onComplete: onComplete, // Unmounts the component
+            });
+          }
         });
 
-        // Stop continuous animations
+        // Kill continuous animations
         gsap.killTweensOf(logoEl);
         gsap.killTweensOf(glow);
         gsap.killTweensOf(rings.children);
 
-        // Smooth fade out - everything fades together
-        exitTl.to(
-          [logoEl, rings, text, progressBar.parentElement, glow],
+        // Animate auxiliary elements out quickly first
+        internalExitTl.to(
+          [rings, text, progressBar.parentElement, glow],
           {
             opacity: 0,
-            scale: 0.95,
-            duration: 0.6,
-            ease: 'power2.inOut',
+            scale: 0.9,
+            duration: 0.4,
+            ease: 'power2.in',
+            stagger: 0.05
           }
         );
 
-        // Loader fades out smoothly
-        exitTl.to(
-          loader,
+        // Animate Logo Zoom - Professional "Warp" effect
+        internalExitTl.to(
+          logoEl,
           {
-            opacity: 0,
-            duration: 0.4,
-            ease: 'power2.inOut',
+            scale: 50, // Massive zoom
+            opacity: 0, // Fade out as it gets too close
+            duration: 0.8,
+            ease: 'expo.in', // Starts slow, accelerates fast like a warp
           },
-          '-=0.2'
+          '-=0.2' // Start slightly overlapping with other elements fading
         );
+
       }, minimumDuration);
     }, loader);
 
     return () => {
       ctx.revert();
     };
-  }, [minimumDuration, onComplete]);
+  }, [minimumDuration, onComplete, onExitStart]);
 
   return (
     <div
@@ -181,7 +194,7 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
         background: 'linear-gradient(180deg, hsl(230, 25%, 5%) 0%, hsl(240, 20%, 7%) 50%, hsl(230, 25%, 5%) 100%)',
       }}
     >
-      {/* Static gradient background - no moving particles */}
+      {/* Background patterns */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] md:w-[700px] md:h-[700px]"
@@ -203,25 +216,16 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
           }}
         />
 
-        {/* Orbital rings - clean, minimal */}
+        {/* Orbital rings */}
         <div ref={ringsRef} className="absolute inset-0 flex items-center justify-center">
-          {/* Inner ring */}
           <div 
             className="absolute w-28 h-28 md:w-36 md:h-36 rounded-full"
-            style={{ 
-              border: '1px solid hsla(245, 90%, 66%, 0.2)',
-            }}
+            style={{ border: '1px solid hsla(245, 90%, 66%, 0.2)' }}
           />
-          
-          {/* Middle ring */}
           <div 
             className="absolute w-40 h-40 md:w-52 md:h-52 rounded-full"
-            style={{ 
-              border: '1px solid hsla(200, 100%, 50%, 0.15)',
-            }}
+            style={{ border: '1px solid hsla(200, 100%, 50%, 0.15)' }}
           />
-          
-          {/* Outer ring */}
           <div 
             className="absolute w-52 h-52 md:w-68 md:h-68 rounded-full"
             style={{ 
@@ -239,9 +243,7 @@ const Loader = ({ onComplete, minimumDuration = 2500 }: LoaderProps) => {
               src={logo} 
               alt="Astro Codez" 
               className="w-full h-full object-contain"
-              style={{
-                filter: 'drop-shadow(0 0 20px hsla(245, 90%, 66%, 0.3))',
-              }}
+              style={{ filter: 'drop-shadow(0 0 20px hsla(245, 90%, 66%, 0.3))' }}
             />
           </div>
         </div>

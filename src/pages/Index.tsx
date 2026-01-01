@@ -23,44 +23,45 @@ const Index = () => {
   const mainRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleLoaderComplete = useCallback(() => {
-    setIsLoading(false);
-    
-    // Smoother, more professional entrance animation
-    if (mainRef.current && contentRef.current) {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          ScrollTrigger.refresh();
-        }
-      });
-
-      // Set initial state
-      gsap.set(mainRef.current, { opacity: 0 });
-      gsap.set(contentRef.current, { opacity: 0 });
-
-      // Fade in the background first
-      tl.to(mainRef.current, {
-        opacity: 1,
-        duration: 0.5,
-        ease: 'power2.out',
-      });
-
-      // Then fade in the content
-      tl.to(
+  // Called when loader starts its exit animation
+  const handleExitStart = useCallback(() => {
+    if (contentRef.current) {
+      // Content Reveal Animation
+      // Starts slightly zoomed in and brightens as loader lifts
+      gsap.fromTo(
         contentRef.current,
-        {
-          opacity: 1,
-          duration: 0.6,
-          ease: 'power2.out',
+        { 
+          scale: 1.05, 
+          y: 20,
+          filter: 'blur(5px)',
         },
-        '-=0.2'
+        { 
+          scale: 1, 
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 1.5, 
+          ease: 'power3.out',
+          onComplete: () => {
+            ScrollTrigger.refresh();
+          }
+        }
       );
     }
   }, []);
 
+  // Called when loader is fully gone
+  const handleLoaderComplete = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
-    // Don't initialize Lenis until loader is complete
-    if (isLoading) return;
+    // Don't initialize Lenis until loader is complete to prevent scrolling while loading
+    if (isLoading) {
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    
+    document.body.style.overflow = '';
 
     // Initialize Lenis for ultra-smooth scrolling with optimized settings
     const lenis = new Lenis({
@@ -112,14 +113,19 @@ const Index = () => {
 
   return (
     <>
-      {/* Loader */}
-      {isLoading && <Loader onComplete={handleLoaderComplete} minimumDuration={2500} />}
+      {/* Loader - Fixed overlay that covers content */}
+      {isLoading && (
+        <Loader 
+          onExitStart={handleExitStart}
+          onComplete={handleLoaderComplete} 
+          minimumDuration={2500} 
+        />
+      )}
 
-      {/* Main Content */}
+      {/* Main Content - Always rendered but covered by Loader initially */}
       <div 
         ref={mainRef} 
         className="relative min-h-screen overflow-x-hidden"
-        style={{ visibility: isLoading ? 'hidden' : 'visible' }}
       >
         {/* Scroll Progress Bar */}
         <div 
