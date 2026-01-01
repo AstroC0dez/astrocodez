@@ -94,8 +94,8 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
         },
       });
 
-      // Subtle continuous animations
-      gsap.to(logoEl, {
+      // Continuous animations
+      const logoPulse = gsap.to(logoEl, {
         scale: 1.03,
         duration: 2,
         repeat: -1,
@@ -103,7 +103,7 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
         ease: 'sine.inOut',
       });
 
-      gsap.to(glow, {
+      const glowPulse = gsap.to(glow, {
         opacity: 0.6,
         scale: 1.1,
         duration: 2.5,
@@ -112,24 +112,11 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
         ease: 'sine.inOut',
       });
 
-      gsap.to(rings.children[0], {
-        rotation: 360,
-        duration: 20,
-        repeat: -1,
-        ease: 'none',
-      });
-      gsap.to(rings.children[1], {
-        rotation: -360,
-        duration: 30,
-        repeat: -1,
-        ease: 'none',
-      });
-      gsap.to(rings.children[2], {
-        rotation: 360,
-        duration: 40,
-        repeat: -1,
-        ease: 'none',
-      });
+      const ringsRotation = [
+        gsap.to(rings.children[0], { rotation: 360, duration: 20, repeat: -1, ease: 'none' }),
+        gsap.to(rings.children[1], { rotation: -360, duration: 30, repeat: -1, ease: 'none' }),
+        gsap.to(rings.children[2], { rotation: 360, duration: 40, repeat: -1, ease: 'none' })
+      ];
 
       // Exit animation
       setTimeout(() => {
@@ -150,9 +137,9 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
         });
 
         // Kill continuous animations
-        gsap.killTweensOf(logoEl);
-        gsap.killTweensOf(glow);
-        gsap.killTweensOf(rings.children);
+        logoPulse.kill();
+        glowPulse.kill();
+        ringsRotation.forEach(t => t.kill());
 
         // Animate auxiliary elements out quickly first
         internalExitTl.to(
@@ -166,16 +153,21 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
           }
         );
 
-        // Animate Logo Zoom - Professional "Warp" effect
+        // Animate Logo Zoom - Fill the screen
+        // Calculate scale needed to fill screen roughly
+        const viewportMin = Math.min(window.innerWidth, window.innerHeight);
+        const logoSize = 100; // Base size of logo container
+        const targetScale = (viewportMin / logoSize) * 1.5; // Scale to be slightly larger than screen width
+
         internalExitTl.to(
           logoEl,
           {
-            scale: 50, // Massive zoom
-            opacity: 0, // Fade out as it gets too close
-            duration: 0.8,
-            ease: 'expo.in', // Starts slow, accelerates fast like a warp
+            scale: targetScale, 
+            opacity: 0, // Fade out as it fills screen
+            duration: 1.2,
+            ease: 'power4.inOut', // Smooth acceleration and deceleration
           },
-          '-=0.2' // Start slightly overlapping with other elements fading
+          '-=0.2'
         );
 
       }, minimumDuration);
@@ -205,7 +197,7 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
       </div>
 
       {/* Main loader content */}
-      <div className="relative flex flex-col items-center">
+      <div className="relative flex flex-col items-center w-full h-full justify-center">
         {/* Ambient glow behind logo */}
         <div 
           ref={glowRef}
@@ -217,7 +209,7 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
         />
 
         {/* Orbital rings */}
-        <div ref={ringsRef} className="absolute inset-0 flex items-center justify-center">
+        <div ref={ringsRef} className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div 
             className="absolute w-28 h-28 md:w-36 md:h-36 rounded-full"
             style={{ border: '1px solid hsla(245, 90%, 66%, 0.2)' }}
@@ -236,9 +228,9 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
           />
         </div>
 
-        {/* Logo */}
-        <div ref={logoRef} className="relative z-10">
-          <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center">
+        {/* Logo Container - Centered */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div ref={logoRef} className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center origin-center">
             <img 
               src={logo} 
               alt="Astro Codez" 
@@ -248,32 +240,34 @@ const Loader = ({ onComplete, onExitStart, minimumDuration = 2500 }: LoaderProps
           </div>
         </div>
 
-        {/* Text */}
-        <div ref={textRef} className="mt-12 md:mt-16 text-center">
-          <div className="text-xl md:text-2xl font-bold mb-1">
-            <span className="gradient-text">Astro</span>
-            <span className="text-foreground">Codez</span>
+        {/* Text & Progress - Positioned relative to center but pushed down */}
+        <div className="flex flex-col items-center mt-40 md:mt-48 z-10">
+          <div ref={textRef} className="text-center">
+            <div className="text-xl md:text-2xl font-bold mb-1">
+              <span className="gradient-text">Astro</span>
+              <span className="text-foreground">Codez</span>
+            </div>
+            <div className="text-xs md:text-sm text-muted-foreground">
+              Building Digital Universes
+            </div>
           </div>
-          <div className="text-xs md:text-sm text-muted-foreground">
-            Building Digital Universes
-          </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="mt-8 md:mt-10 w-40 md:w-48">
-          <div className="h-0.5 bg-muted/20 rounded-full overflow-hidden">
-            <div 
-              ref={progressRef}
-              className="h-full rounded-full origin-left"
-              style={{
-                background: 'linear-gradient(90deg, hsl(245, 90%, 66%), hsl(200, 100%, 50%))',
-              }}
-            />
-          </div>
-          <div className="mt-2 text-center">
-            <span className="text-xs text-muted-foreground/70">
-              {progress}%
-            </span>
+          {/* Progress bar */}
+          <div className="mt-6 w-40 md:w-48">
+            <div className="h-0.5 bg-muted/20 rounded-full overflow-hidden">
+              <div 
+                ref={progressRef}
+                className="h-full rounded-full origin-left"
+                style={{
+                  background: 'linear-gradient(90deg, hsl(245, 90%, 66%), hsl(200, 100%, 50%))',
+                }}
+              />
+            </div>
+            <div className="mt-2 text-center">
+              <span className="text-xs text-muted-foreground/70">
+                {progress}%
+              </span>
+            </div>
           </div>
         </div>
       </div>

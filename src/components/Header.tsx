@@ -27,14 +27,12 @@ const Header = () => {
     const header = headerRef.current;
     if (!header) return;
 
-    gsap.fromTo(
-      header,
-      { y: -100, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 0.5 }
-    );
+    // Force header to be visible immediately
+    gsap.set(header, { y: 0, opacity: 1 });
 
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      // Toggle scrolled state but header always stays visible
+      setIsScrolled(window.scrollY > 20);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -81,13 +79,15 @@ const Header = () => {
   return (
     <header
       ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'py-2 md:py-3' : 'py-4 md:py-6'
       }`}
     >
       <nav
-        className={`max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between transition-all duration-500 ${
-          isScrolled || mobileMenuOpen ? 'glass py-3 md:py-4 px-4 md:px-8 mx-4 md:mx-6 rounded-2xl' : ''
+        className={`max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between transition-all duration-300 ${
+          isScrolled || mobileMenuOpen 
+            ? 'glass py-3 md:py-4 px-4 md:px-8 mx-4 md:mx-6 rounded-2xl bg-background/80 backdrop-blur-md border border-white/10 shadow-lg' 
+            : ''
         }`}
       >
         {/* Logo */}
@@ -140,7 +140,7 @@ const Header = () => {
       {mobileMenuOpen && (
         <div
           ref={mobileMenuRef}
-          className="md:hidden fixed inset-x-4 top-20 glass rounded-2xl p-6 z-40"
+          className="md:hidden fixed inset-x-4 top-20 glass rounded-2xl p-6 z-40 bg-background/95 backdrop-blur-xl border border-white/10"
         >
           <ul className="flex flex-col gap-4">
             {navItems.map((item) => (

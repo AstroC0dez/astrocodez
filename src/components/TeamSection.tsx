@@ -1,7 +1,7 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Github, Linkedin, Twitter, Cpu, Code2, Palette, Terminal, Globe, Database, Server } from 'lucide-react';
+import { Github, Linkedin, Twitter, Cpu, Code2, Palette, Terminal, Globe, Database, Server, ChevronDown } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -76,6 +76,7 @@ const TeamSection = () => {
   const titleRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [showAllMobile, setShowAllMobile] = useState(false);
 
   // 3D Tilt Effect on Hover
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>, index: number) => {
@@ -163,6 +164,7 @@ const TeamSection = () => {
       );
 
       // Grid Staggered Entrance
+      // Only animate initially visible items or all if on desktop
       const cards = grid.querySelectorAll('.team-card-wrapper');
       
       gsap.fromTo(
@@ -218,6 +220,11 @@ const TeamSection = () => {
     };
   }, []);
 
+  // Filter team members for mobile view
+  const visibleTeamMembers = typeof window !== 'undefined' && window.innerWidth < 768 && !showAllMobile
+    ? teamMembers.slice(0, 3) 
+    : teamMembers;
+
   return (
     <section
       ref={sectionRef}
@@ -262,9 +269,9 @@ const TeamSection = () => {
           ref={gridRef}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto perspective-1000"
         >
-          {teamMembers.map((member, index) => (
+          {visibleTeamMembers.map((member, index) => (
             <div
-              key={index}
+              key={member.name} // Use name as key for stable identity
               ref={(el) => (cardsRef.current[index] = el)}
               className={`team-card-wrapper group relative h-[400px] w-full cursor-pointer 
                 ${index === 3 ? 'lg:col-span-1 xl:col-span-1' : ''} 
@@ -347,6 +354,19 @@ const TeamSection = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile Show More Button */}
+        <div className="md:hidden text-center mt-8">
+          {!showAllMobile && teamMembers.length > 3 && (
+            <button 
+              onClick={() => setShowAllMobile(true)}
+              className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium transition-all hover:bg-primary/20 hover:scale-105 active:scale-95"
+            >
+              <span>View All Crew Members</span>
+              <ChevronDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+            </button>
+          )}
         </div>
         
         {/* Footer Text */}
