@@ -122,6 +122,9 @@ const Index = () => {
         />
       )}
 
+      {/* Header - Moved outside content container to fix visibility issues */}
+      <Header />
+
       {/* Main Content - Always rendered but covered by Loader initially */}
       <div 
         ref={mainRef} 
@@ -207,7 +210,6 @@ const Index = () => {
 
         {/* Content */}
         <div ref={contentRef} className="relative z-10">
-          <Header />
           <main>
             <HeroSection />
             <AboutSection />

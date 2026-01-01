@@ -318,8 +318,8 @@ const ProcessSection = () => {
                       isEven ? 'lg:mr-auto lg:ml-0' : 'lg:ml-auto lg:mr-0'
                     } lg:w-[45%]`}
                   >
-                    {/* Step number badge */}
-                    <div className="absolute -top-3 -right-3 md:-top-4 md:-right-4">
+                    {/* Step number badge - positioned with 25% left and 20% bottom offset */}
+                    <div className="absolute -top-3 -right-3 md:-top-4 md:-right-4 -translate-x-[25%] translate-y-[20%]">
                       <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${step.gradient} flex items-center justify-center shadow-lg transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
                         <span className="text-lg md:text-xl font-bold text-white">{step.number}</span>
                       </div>
